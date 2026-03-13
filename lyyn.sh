@@ -16,27 +16,24 @@ git config --global --add safe.directory "$(pwd)"
 echo "[*] Menambahkan semua file…"
 git add .
 
-git commit -m "Upload: $(date)"
+git commit -m "Upload: $(date)" || echo "[!] Nothing to commit"
 
 git branch -M $branch
 
-git remote add origin https://$username:$token@github.com/$username/$repo.git
+git remote add origin https://$username:$token@github.com/$username/$repo.git 2>/dev/null || git remote set-url origin https://$username:$token@github.com/$username/$repo.git
 
 echo "[*] Fetch dari remote…"
 git fetch origin $branch
 
-echo "[*] Cek apakah remote punya history…"
+echo "[*] Cek remote history…"
 if git rev-parse --verify origin/$branch >/dev/null 2>&1; then
-    echo "[*] Remote ada commit, rebase dulu…"
-    if ! git rebase origin/$branch; then
-        echo "[!] Conflict terdeteksi, ambil versi local (ours)…"
-        git checkout --ours .
-        git add .
-        git rebase --continue
-    fi
+    echo "[*] Remote ada commit, reset dan force push…"
+    git reset --soft origin/$branch
+    git add .
+    git commit -m "Upload: $(date)"
 fi
 
 echo "[*] Push ke GitHub…"
-git push -u origin $branch --force-with-lease
+git push -u origin $branch --force
 
 echo "[v] Upload selesai ke $repo di cabang $branch!"
