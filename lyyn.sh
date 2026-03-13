@@ -1,4 +1,4 @@
-# github-update#!/data/data/com.termux/files/usr/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
 
 read -p "GitHub Username: " username
 read -p "Repository Name: " repo
@@ -27,12 +27,16 @@ git fetch origin $branch
 
 echo "[*] Cek apakah remote punya history…"
 if git rev-parse --verify origin/$branch >/dev/null 2>&1; then
-   echo "[*] Remote ada commit, rebase dulu…"
-   git rebase origin/$branch
+    echo "[*] Remote ada commit, rebase dulu…"
+    if ! git rebase origin/$branch; then
+        echo "[!] Conflict terdeteksi, ambil versi local (ours)…"
+        git checkout --ours .
+        git add .
+        git rebase --continue
+    fi
 fi
 
 echo "[*] Push ke GitHub…"
-git push -u origin $branch
+git push -u origin $branch --force-with-lease
 
 echo "[v] Upload selesai ke $repo di cabang $branch!"
-r-repo
